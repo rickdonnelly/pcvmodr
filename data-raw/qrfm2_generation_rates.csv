@@ -1,0 +1,11 @@
+Category,Light,Medium,Heavy
+Agriculture,1.11,0.289,0.174
+Mining,1.11,0.289,0.174
+Construction,1.11,0.289,0.174
+Manufacturing,0.938,0.242,0.104
+Transport,0.938,0.242,0.104
+Utilities,0.938,0.242,0.104
+Wholesale,0.938,0.242,0.104
+Retail,0.888,0.253,0.065
+Services,0.437,0.068,0.009
+Households,0.251,0.099,0.038
