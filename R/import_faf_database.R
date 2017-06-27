@@ -4,35 +4,30 @@
 #'   format originally supplied by FHWA. Alternatively, the user can code the
 #'   filename (with path) of a comma-separated value (CSV) file containing the
 #'   same information, which the program will import into a data frame.
-#' @param target_year The year for which data will be extracted from the FAF
-#'   data and used in subsequent analyses. Code NA if all years are to be kept.
 #' @param distance Data frame containing the inter-regional (FAF region to FAF
 #'   region) average distances. Alternatively, the user can code the filename
 #'   (with path) of a comma-separated value file containing the data.
 #' @param save_to File name for saving the FAF data transformed into the format
-#'   used internally by the CV modeling system (optional)
+#'   used internally by the CV modeling system
 #'
 #' @details This function reads the FHWA Freight Analysis Framework Verion 4
 #'   regional database in comma-separated value (CSV) format, as found on their
 #'   website, and translates it into the format used in our analyses. Some
 #'   categorical variables are mapped from integer values to more descriptive
 #'   strings, value and tons are scaled back to real numbers, and average inter-
-#'   regional distances are appended to each record. The user can specify a
-#'   target year, in which case data only for that year or the closest year in
-#'   the database will be retained. A single data frame of processed records is
-#'   returned. It is important to note that the origin(s) and destination(s) are
-#'   still coded in FAF regions at this point, as data still represent annual
-#'   flows.
+#'   regional distances are appended to each record. A single data frame of
+#'   processed records is returned. It is important to note that the origin(s)
+#'   and destination(s) are still coded in FAF regions at this point, as data
+#'   still represent annual flows.
 #'
 #' @export
 #' @examples
-#' faf43 <- import_faf_database(faf_flows, 2017, faf_distances)
+#' faf43 <- import_faf_database(faf_flows, faf_distances)
 #' faf43 <- import_faf_database("/Models/CT_Future2040/inputs/faf4_3_csv.zip",
-#'   2017, "faf_interregional_distances.csv.gz", "faf43-reformmatted.csv")
+#'   "faf_interregional_distances.csv.gz", "faf43-reformmatted.csv")
 
 
-import_faf_database <- function(faf_data, target_year = NA, distances = NULL,
-  save_to = NULL) {
+import_faf_database <- function(faf_data, distances = NULL, save_to = NULL) {
   # If the FAF data are provided as a data frame then we're ready to. But if it
   # is a string assume that it is a fully-qualified path name, and attempt to
   # read it into a data frame.
@@ -62,34 +57,6 @@ import_faf_database <- function(faf_data, target_year = NA, distances = NULL,
       year = as.integer(year), dms_orig = as.integer(dms_orig),
       dms_dest = as.integer(dms_dest), fr_orig = as.integer(fr_orig),
       fr_dest = as.integer(fr_dest), sctg2 = as.integer(sctg2))
-
-  # If the user codes NA (missing value) for the target year then all years of
-  # data are retained, which is normally only used when saving a converted
-  # database so that we don't have to run the import process every time. But if
-  # the target year isn't one of those coded in the data we will need to
-  # associate it with data from the closest year. However, we'll crash if the
-  # target year is more than five years outside of the data contained in the
-  # dataset.
-  if (!is.na(target_year)) {
-    years_included <- sort(unique(tall$year))
-
-    # We only need to find the closest year if there is not an exact match with
-    # one of the years in the data
-    if (!target_year %in% years_included) {
-      offsets <- abs(years_included - target_year)
-      if (min(offsets)>5) {
-        stop(paste("Target year", target_year, "is", min(offsets),
-          "years outside of the range of years included in FAF data"))
-      } else {
-        closest_year <- years_included[which.min(offsets)]
-        print(paste("Target year of", target_year, "associated with closest",
-          "year of", closest_year, "in FAF data"), quote = FALSE)
-      }
-    }
-
-    # Finally, eliminate all records except those for the closest year
-    tall <- dplyr::filter(tall, year == closest_year)
-  }
 
   # Recode the trade type from numeric to string description
   trade_type_labels <- c("Domestic", "Import", "Export")
