@@ -104,10 +104,13 @@ sample_faf_daily_trucks <- function(annual_truckload_equivalents,
   daily_trips <- dplyr::bind_rows(results)
   simulation_stop <- proc.time()
   elapsed_seconds <- round((simulation_stop - simulation_start)[["elapsed"]], 1)
-  print(paste("Simulation time=", elapsed_seconds, " seconds"), quote = FALSE)
+  print(paste("Simulation time =", elapsed_seconds, "seconds"), quote = FALSE)
   convergence <- round((nrow(daily_trips)/daily_target), 3)
   print(paste("Daily trucks: target =", daily_target, "generated =",
     nrow(daily_trips), "convergence =", convergence), quote = FALSE)
+
+  # Save the intermediate results if asked to do so
+  if (!is.null(save_to)) readr::write_csv(daily_trips, save_to)
 
   # Return the result
   daily_trips
