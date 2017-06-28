@@ -2,3 +2,4 @@
 
 export(create_faf_annual_truckloads)
 export(import_faf_database)
+export(sample_faf_daily_trucks)
