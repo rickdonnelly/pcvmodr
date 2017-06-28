@@ -72,6 +72,7 @@ sample_faf_daily_trucks <- function(annual_truckload_equivalents,
       week = sample(1:52, n_trucks, replace=replacement_key),
       day = sample(1:7, n_trucks, replace=TRUE)
     )
+    w_trucks <- nrow(dplyr::filter(draws, week == target_week))
 
     # Do any of the trips occur within our target week and day? If so append
     # the important details from the replicant record. Note that the reporting
@@ -80,21 +81,18 @@ sample_faf_daily_trucks <- function(annual_truckload_equivalents,
     keep <- dplyr::filter(draws, week == target_week, day == target_day)
     d_trucks <- nrow(keep)
     if (d_trucks > 0) {
-      keep <- keep %>%
-        dplyr::mutate(truckID = seq(1, d_trucks), status = replicant$status,
-          value = round(replicant$value/n_trucks, 0),
-          tons = round(replicant$tons/n_trucks, 1)) %>%
-        dplyr::select(-week, -day) %>%
+      daily_trips <- keep %>%
+        dplyr::mutate(truckID = seq(1, d_trucks), status = replicant$status) %>%
         dplyr::full_join(replicant, by = "status") %>%
-        dplyr::select(-zed, -value, -tons, -ton_miles, -annual_trucks)
-      print(paste("replicant", replicantID, ": weekly trucks =", weekly_trucks,
-        "daily trucks=", nrow(keep)), quote = FALSE)
+        dplyr::mutate(value = round(replicant$value/n_trucks, 0),
+          tons = round(replicant$tons/n_trucks, 1)) %>%
+        dplyr::select(-week, -day, -zed, -annual_trucks)
     } else {
-      keep <- dplyr::data_frame()   # Delete the contents if no trucks generated
-      print(paste("replicant", replicantID, ":", n_trucks,
-        "annual trucks, but no weekly trips"), quote = FALSE)
+      daily_trips <- dplyr::data_frame()   # Delete the contents if no trucks generated
     }
-    keep
+    print(paste("replicant", replicantID, "trucks: annual =", n_trucks,
+      "weekly =", w_trucks, "daily =", d_trucks), quote = FALSE)
+    daily_trips
   }
 
   # Build a database of daily truck trips, how that we know how many truck trips
