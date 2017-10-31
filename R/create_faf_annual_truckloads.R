@@ -104,10 +104,8 @@ create_faf_annual_truckloads <- function(faf_database, truck_allocation_factors,
    # although we'll need to change the logic a bit. First we'll sample value,
    # and then tonnage, matching both by descending order.
    zero_both <- dplyr::filter(faf_database, value == 0 & tons == 0)
-   value_draws <- sort(sample(1:1e6, nrow(zero_both), replace = TRUE))
-   tonnage_draws <- sort(sample(1:1e4, nrow(zero_both), replace = TRUE))
-   zero_both$value <- value_draws
-   zero_both$tons <- tonnage_draws
+   zero_both$value <- sort(sample(1:1e6, nrow(zero_both), replace = TRUE))
+   zero_both$tons <- sort(sample(1:1e4, nrow(zero_both), replace = TRUE))
 
    # Now put them back together into single revised FAF database, which we will
    # sample the annual truckload equivalents from
@@ -179,8 +177,8 @@ create_faf_annual_truckloads <- function(faf_database, truck_allocation_factors,
     # allocated to each vehicle class (as in Table 3-7). Note that we normalize
     # the allocation factors, which don't sum to unity in some cases.
     TAF <- truck_allocation_factors %>%
-      dplyr::filter(replicant$distance >= minimum_range &
-          replicant$distance <= maximum_range & allocation_factor > 0.0) %>%
+      dplyr::filter(replicant$distance_mi >= minimum_range &
+          replicant$distance_mi <= maximum_range & allocation_factor > 0.0) %>%
       dplyr::mutate(allocation_factor = allocation_factor/sum(allocation_factor),
         tons = replicant$tons * allocation_factor)
 
