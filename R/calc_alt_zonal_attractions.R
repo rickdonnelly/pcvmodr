@@ -23,11 +23,11 @@
 #' attractions <- calc_alt_zonal_attractions(synthetic_firms, empcat,
 #'   qrfm_rates, save_to = file.path(MY_PATH, "outputs/zonal_attractions.csv"))
 
-library(tidyverse)
-zonal_data <- readr::read_csv("/Models/pcvmodr-test/inputs/TAZs.csv")
-employment_categories <- readr::read_csv("/Models/pcvmodr-test/inputs/employment_categories.csv")
-generation_rates <- readr::read_csv("/Models/pcvmodr/data-raw/qrfm2_generation_rates.csv")
-save_to <- "/Models/pcvmodr-test/outputs/zonal_attractions.csv"
+#library(tidyverse)
+#zonal_data <- readr::read_csv("/Models/pcvmodr-test/inputs/TAZs.csv")
+#employment_categories <- readr::read_csv("/Models/pcvmodr-test/inputs/employment_categories.csv")
+#generation_rates <- readr::read_csv("/Models/pcvmodr/data-raw/qrfm2_generation_rates.csv")
+#save_to <- "/Models/pcvmodr-test/outputs/zonal_attractions.csv"
 
 calc_alt_zonal_attractions <- function(zonal_data, employment_categories,
   generation_rates, save_to = NULL) {
