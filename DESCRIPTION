@@ -1,7 +1,7 @@
 Package: pcvmodr
 Type: Package
 Title: Portable version of Oregon TLUMIP Commercial Vehicle (CV) model
-Version: 0.1.0
+Version: 0.2.0
 Author: Rick Donnelly
 Maintainer: Rick Donnelly <rickdonnelly@gmail.com>
 Description: A library of functions for flexibly building the commercial vehicle
@@ -9,11 +9,11 @@ Description: A library of functions for flexibly building the commercial vehicle
     Model Integration Program (TLUMIP). This version is designed to be portable,
     using its adaptation in Idaho as the test case.
 Depends:
-    R (>= 3.4)
+    R (>= 3.5)
 Imports:
     tidyverse,
     doParallel (>= 1.0.8)
-License: CC0
+License: None
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1

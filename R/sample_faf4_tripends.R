@@ -49,7 +49,7 @@
 #'   "trips_with_taz_coded.csv")   # Run with all parameters
 
 
-sample_faf_tripends <- function(daily_trips, zonal_attractions,
+sample_faf4_tripends <- function(daily_trips, zonal_attractions,
   included_attractions = "Heavy", zonal_equivalencies, phantom_zones = NULL,
   makeuse_coefficients = NULL, save_to = NULL) {
   # We will append the origin and destination traffic analysis zone (TAZ) to
