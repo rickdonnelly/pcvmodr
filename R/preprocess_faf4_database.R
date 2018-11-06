@@ -28,27 +28,27 @@ preprocess_faf4_database <- function(fhwa_db, target_year) {
       years_found <- c(years_found, this_year)
     }
   }
-  
+
   # Finding the closest year in the dataset should now be easy, as we can find
   # the year closest to our target year
   offsets <- abs(years_found - target_year)
   faf_year <- years_found[which.min(offsets)]
   print(paste("FAF data from", faf_year, "is closest to target year",
     target_year), quote = FALSE)
-  
+
   # Append the tonnage, value, and ton-miles to each record from the FAF year
   # closest to the target year and scale them on the fly
   fhwa_db$year <- faf_year
   fhwa_db$exp_tons <- fhwa_db[[paste0("tons_", faf_year)]] * 1e3
   fhwa_db$exp_value <- fhwa_db[[paste0("value_", faf_year)]] * 1e6
   fhwa_db$exp_tmiles <- fhwa_db[[paste0("tmiles_", faf_year)]] * 1e6
-  
+
   # How many records have zero transactions?
   n_zeros <- nrow(dplyr::filter(fhwa_db, exp_value <= 0.0, exp_tons <= 0.0))
   pct_zeros <- percent(n_zeros, nrow(fhwa_db))
   print(paste0(n_zeros, " of ", nrow(fhwa_db), " records (", pct_zeros,
     "%) have zero tons and value coded"), quote = FALSE)
-  
+
   # Finally, create a database with only the fields we need and the format we can
   # can use them
   redux <- fhwa_db %>%
@@ -59,7 +59,7 @@ preprocess_faf4_database <- function(fhwa_db, target_year) {
     dplyr::select(year, fr_orig, dms_orig, fr_dest, dms_dest, fr_inmode,
       dms_mode, fr_outmode, sctg2, trade_type, wgt_dist, exp_tons, exp_value,
       exp_tmiles)
-  
+
   # Return the results
   return(redux)
 }

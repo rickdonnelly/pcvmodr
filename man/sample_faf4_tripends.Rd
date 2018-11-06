@@ -5,8 +5,8 @@
 \title{Allocate interregional truck trips to origin and destination traffic zone}
 \usage{
 sample_faf4_tripends(daily_trips, zonal_attractions,
-  included_attractions = "Heavy", zonal_equivalencies, phantom_zones = NULL,
-  makeuse_coefficients = NULL, save_to = NULL)
+  included_attractions = "Heavy", zonal_equivalencies,
+  phantom_zones = NULL, makeuse_coefficients = NULL, save_to = NULL)
 }
 \arguments{
 \item{daily_trips}{Data frame containing the daily FAF truck flows with

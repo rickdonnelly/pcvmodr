@@ -1,9 +1,22 @@
-run_model <- function() {
-  # Template for running pcvmodr
+#' Run pcvmodr for Idaho statewide model
+#'
+#' @param runtime_parameters Fully-qualified path and filename of text file
+#'   containing runtime parameters required to run models built using pcvmodr
+#'   functions
+#'
+#' @details This function runs the interregional and local truck models built
+#'   using pcvmodr functions for the Idaho statewide model.
+#'
+#' @export
+#' @examples
+#' run_idaho("./runtime_parameters.txt")
+
+
+run_idaho <- function(runtime_parameters) {
   library(pcvmodr); library(tidyverse); library(doParallel)
 
   # Read the runtime parameters
-  RTP <<- pcvmodr::get_runtime_parameters("./prelim_parameters.txt")
+  RTP <<- pcvmodr::get_runtime_parameters(runtime_parameters)
 
   # Start the doParallel cluster
   myCluster <- parallel::makeCluster(parallel::detectCores(),
