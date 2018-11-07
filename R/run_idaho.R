@@ -31,6 +31,7 @@ run_idaho <- function(runtime_parameters) {
   faf_db <- pcvmodr::preprocess_faf4_database(fhwa_database, 2013)
 
   # Group FAF regions into states, which are easier to use
+  alaska <- 20
   arizona <- c(41, 42, 49)
   california <- c(61:65, 69)
   idaho <- 160
@@ -52,11 +53,17 @@ run_idaho <- function(runtime_parameters) {
 
   # Flows from Oregon or Washington to the rest of the USA should be included,
   # with exception of flows between them and rest of Nevada (Reno) or anywhere
-  # in California
+  # in California or Alaska
   faf_db$tag <- ifelse(faf_db$dms_orig %in% c(oregon, washington) &
-      !faf_db$dms_dest %in% c(reno, california), "through", faf_db$tag)
+      !faf_db$dms_dest %in% c(alaska, reno, california), "through", faf_db$tag)
   faf_db$tag <- ifelse(faf_db$dms_orig %in% c(reno, california) &
-      !faf_db$dms_dest %in% c(oregon, washington), "through", faf_db$tag)
+      !faf_db$dms_dest %in% c(alaska, oregon, washington), "through", faf_db$tag)
+
+  # Add Alaska to Las Vegas, Arizona, Utah and vice-versa
+  faf_db$tag <- ifelse(faf_db$dms_orig %in% c(las_vegas, arizona, utah) &
+      faf_db$dms_dest %in% alaska, "through", faf_db$tag)
+  faf_db$tag <- ifelse(faf_db$dms_orig %in% alaska &
+      faf_db$dms_dest %in% c(las_vegas, arizona, utah), "through", faf_db$tag)
 
   # Finally, flows between California, Nevada, Utah, and Arizona and anywhere in
   # Montana probably flow through Idaho, so tag them as well
