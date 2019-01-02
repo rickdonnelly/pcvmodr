@@ -78,6 +78,8 @@ run_idaho <- function(runtime_parameters) {
   faf_flows <- dplyr::filter(faf_db, tag != "drop")
   print(paste(nrow(faf_flows), "FAF flows records affecting ID retained"),
     quote = FALSE)
+  intermediate_output <- file.path(RTP[["scenario_folder"]], "faf_flows.feather")
+  pcvmodr::write_file(faf_flows, intermediate_output)
 
   # Create annual and daily FAF truckload equivalents
   truckloads <- pcvmodr::create_faf4_annual_truckloads(faf_flows)
