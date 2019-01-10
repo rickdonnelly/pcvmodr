@@ -4,12 +4,9 @@
 \alias{export_trip_matrices}
 \title{Export trips into Cube matrix import format}
 \usage{
-export_trip_matrices(trip_list, save_to = NULL)
+export_trip_matrices(trip_list)
 }
 \arguments{
-\item{save_to}{File name for saving the trip list converted into Cube matrix
-import format (Optional)}
-
 \item{trip_trips}{Data frame containing the final trip list that is ready for
 network assignment}
 }
@@ -22,10 +19,8 @@ This function exports the final trip list to a textfile format that
   created for each combination of period of the day and truck group. The
   latter is hard-coded to map the FAF truck categories to single-unit truck
   (SUT) and multi-unit truck (MUT) groups. A data frame containing the
-  exported files in matrix import format is returned by the function, and can
-  optionally be written to file using the save_to parameter.
+  exported files in matrix import format is returned by the function.
 }
 \examples{
-exported_trips <- export_trip_matrices(trip_list,
-  "exported_trip_matrices.csv")
+exported_trips <- export_trip_matrices(trip_list)
 }

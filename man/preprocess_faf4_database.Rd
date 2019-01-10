@@ -5,11 +5,11 @@
 \title{Transform FAF flow database distributed by FHWA into format for target year}
 \usage{
 preprocess_faf4_database(fhwa_db, target_year, interpolate = FALSE,
-  internal_regions = NULL, bridge_regions = NULL)
+  internal_regions = NULL, outer_regions = NULL)
 }
 \arguments{
 \item{fhwa_db}{Data frame containing the FAF interregional flow database in
-format distributed by FHWA or string containing path and filename
+format distributed by FHWA, or string containing path and filename
 containing the same}
 
 \item{target_year}{The four-digit simulation year as an integer value}
@@ -20,9 +20,9 @@ not one of the years included in the FAF database (defaults to FALSE,
 currently ignored)}
 
 \item{internal_regions}{A set of one or more FAF regions internal to the
-study area (optional, but must be specified if `bridge_regions` is defined)}
+study area (optional, but must be specified if `outer_regions` is defined)}
 
-\item{bridge_regions}{A data frame containing FAF region pairs whose flows
+\item{outer_regions}{A data frame containing FAF region pairs whose flows
 pass through the modeled area (optional, but if specified then
 `internal_regions` must also be specified)}
 }
@@ -62,24 +62,18 @@ This function converts the FHWA Freight Analysis Framework (FAF)
   inbound, or outbound flows). The internal regions are optional, but if
   omitted data from the entire USA will be considered internal to the model.
 
-  Bridge states can optionally defined to include flows that pass through
-  the internal FAF regions. The `bridge_states` must be defined as FAF region
-  pairs (e.g., truck flows between California and Washington on I-5 if
-  Oregon is the modeled area). The flows are assumed to be bidirectional in
-  order to reduce the amount of coding required. An optional factor can
-  included to allocate only a portion of the bridge state flows. The data
-  frame should follow this format (and include this as the file header):
-
-      dms_orig,dms_dest,proportion
-
-  The proportions should be in the range of 0.0 to 1.0, and default to 1.0.
-  Values outside of this range are flagged as errors. The `bridge_states`
-  feature is admittedly only useful in a limited number of states (but
-  fortunately is for cases used in development of this package).
+  Flows likely to pass through one or more internal regions can be included
+  as `outer_regions`. Such flows must be defined as FAF region pairs (e.g.,
+  truck flows between California and Washington on I-5 if Oregon comprises
+  the internal regions). The flows are assumed to be bidirectional to reduce
+  the amount of coding required. Note that any additional fields in
+  `outer_regions` will be added to the FAF flows records. The user should
+  remove any unwanted fields before or after passing the `outer_region`
+  definitions to this function.
 }
 \examples{
 annual_flows <- preprocess_faf4_database(fhwa_database, 2018, FALSE,
-  c(411, 419))
+  c(411, 419, 532))  # Several internal regions and no outer regions defined
 annual_flows <- preprocess_faf4_database("./faf4.4.1.zip", 2016, FALSE,
-  c(160), bridge_states_def)
+  160, idaho_outer_regions)   # A single internal and multiple outer regions
 }

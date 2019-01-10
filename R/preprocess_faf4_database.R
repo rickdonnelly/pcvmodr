@@ -1,7 +1,7 @@
 #' Transform FAF flow database distributed by FHWA into format for target year
 #'
 #' @param fhwa_db Data frame containing the FAF interregional flow database in
-#'   format distributed by FHWA or string containing path and filename
+#'   format distributed by FHWA, or string containing path and filename
 #'   containing the same
 #' @param target_year The four-digit simulation year as an integer value
 #' @param interpolate A boolean variable denoting whether values for the
@@ -9,8 +9,8 @@
 #'   not one of the years included in the FAF database (defaults to FALSE,
 #'   currently ignored)
 #' @param internal_regions A set of one or more FAF regions internal to the
-#'   study area (optional, but must be specified if `bridge_regions` is defined)
-#' @param bridge_regions A data frame containing FAF region pairs whose flows
+#'   study area (optional, but must be specified if `outer_regions` is defined)
+#' @param outer_regions A data frame containing FAF region pairs whose flows
 #'   pass through the modeled area (optional, but if specified then
 #'   `internal_regions` must also be specified)
 #'
@@ -46,36 +46,30 @@
 #'   inbound, or outbound flows). The internal regions are optional, but if
 #'   omitted data from the entire USA will be considered internal to the model.
 #'
-#'   Bridge states can optionally defined to include flows that pass through
-#'   the internal FAF regions. The `bridge_states` must be defined as FAF region
-#'   pairs (e.g., truck flows between California and Washington on I-5 if
-#'   Oregon is the modeled area). The flows are assumed to be bidirectional in
-#'   order to reduce the amount of coding required. An optional factor can
-#'   included to allocate only a portion of the bridge state flows. The data
-#'   frame should follow this format (and include this as the file header):
-#'
-#'       dms_orig,dms_dest,proportion
-#'
-#'   The proportions should be in the range of 0.0 to 1.0, and default to 1.0.
-#'   Values outside of this range are flagged as errors. The `bridge_states`
-#'   feature is admittedly only useful in a limited number of states (but
-#'   fortunately is for cases used in development of this package).
+#'   Flows likely to pass through one or more internal regions can be included
+#'   as `outer_regions`. Such flows must be defined as FAF region pairs (e.g.,
+#'   truck flows between California and Washington on I-5 if Oregon comprises
+#'   the internal regions). The flows are assumed to be bidirectional to reduce
+#'   the amount of coding required. Note that any additional fields in
+#'   `outer_regions` will be added to the FAF flows records. The user should
+#'   remove any unwanted fields before or after passing the `outer_region`
+#'   definitions to this function.
 #'
 #' @export
 #' @examples
 #' annual_flows <- preprocess_faf4_database(fhwa_database, 2018, FALSE,
-#'   c(411, 419))
+#'   c(411, 419, 532))  # Several internal regions and no outer regions defined
 #' annual_flows <- preprocess_faf4_database("./faf4.4.1.zip", 2016, FALSE,
-#'   c(160), bridge_states_def)
+#'   160, idaho_outer_regions)   # A single internal and multiple outer regions
 
 
 preprocess_faf4_database <- function(fhwa_db, target_year, interpolate = FALSE,
-  internal_regions = NULL, bridge_regions = NULL) {
+  internal_regions = NULL, outer_regions = NULL) {
   # Determine whether fhwa_db is a data frame or filename, and complain if not
   contents <- as.character(class(fhwa_db)[1])
   if (contents %in% c("tbl_df", "data.frame", "data.table")) {
     # Assume that the fhwa_db points to a valid data frame
-    print(paste("Building FAF flows data frame from contents in",
+    print(paste("Processing FAF flow data from from contents in",
       deparse(substitute(fhwa_db))), quote = FALSE)
   } else if (contents == "character") {
     # The contents can be a valid filename, but check to make sure
@@ -118,25 +112,33 @@ preprocess_faf4_database <- function(fhwa_db, target_year, interpolate = FALSE,
   fhwa_db$exp_tmiles <- fhwa_db[[paste0("tmiles_", faf_year)]] * 1e6
   fhwa_db$year <- target_year   # Reset to the user-specified year afterwards
 
+  # Now that we have tonnage, value, and ton-miles for the target year drop the
+  # original fields from the data
+  for (this_year in years_found) {
+    fhwa_db[[paste0("tons_", this_year)]] <- NULL
+    fhwa_db[[paste0("value_", this_year)]] <- NULL
+    fhwa_db[[paste0("tmiles_", this_year)]] <- NULL
+  }
+
   # Before we do anything else we need to recast several variables as numeric if
   # they were incorrectly read as character variables
   recast <- dplyr::mutate(fhwa_db, fr_orig = as.integer(fr_orig),
-    dms_orig =as.integer(dms_orig), fr_dest = as.integer(fr_dest),
+    dms_orig = as.integer(dms_orig), fr_dest = as.integer(fr_dest),
     dms_dest = as.integer(dms_dest), sctg2 = as.integer(sctg2),
     dms_mode = as.integer(dms_mode), trade_type = as.integer(trade_type))
 
   # Next tag the regions that will be included within the modeled area. This
-  # list is optional, as some users might want the entire country, but otherwise
-  # set the direction code for those that are included.
+  # list is optional, as some users might want all domestic origins and desti-
+  # nations, but otherwise set the direction code for those that are included.
   recast$direction <- "drop"   # Set the default value for this variable
   if (is.null(internal_regions)) {
     # Everything is internal if the user hasn't specified which regions are
     recast$direction <- "internal"
 
-    # But they cannot specify bridge states in that case, as they don't make
+    # But they cannot specify outer regions in that case, as they don't make
     # sense within this context
-    if (!is.null(bridge_regions)) stop(paste("No regions were tagged as",
-      "internal, but bridge regions were defined"))
+    if (!is.null(outer_regions)) stop(paste("No internal regions were",
+      "specified, but outer regions were"))
   } else {
     # Define the direction codes for those regions specified as internal
     recast$direction <- ifelse(recast$dms_orig %in% internal_regions &
@@ -146,19 +148,32 @@ preprocess_faf4_database <- function(fhwa_db, target_year, interpolate = FALSE,
     recast$direction <- ifelse(!recast$dms_orig %in% internal_regions &
         recast$dms_dest %in% internal_regions, "inbound", recast$direction)
 
-    # Then process the bridge regions if they are defined. Note that the user
-    # can define internal regions but leave bridge regions undefined.
-    if (!is.null(bridge_regions)) {
-      n_bridge_regions <- nrow(bridge_regions)
-      bridge_regions <- dplyr::rename(bridge_regions, FROM = dms_orig,
-        TO = dms_dest, PROPORTION = proportion)  # Create shorthands
-      for (i in (1:n_bridge_regions)) {
-        # Tag both FROM-TO and TO-FROM directions
-        recast$direction <- ifelse(recast$dms_orig == bridge_regions$FROM[i] &
-            recast$dms_dest == bridge_regions$TO[i], "through",
-          recast$direction)
-        recast$direction <- ifelse(recast$dms_orig == bridge_regions$TO[i] &
-            recast$dms_dest == bridge_regions$FROM[i], "through",
+    # Then process the outer regions if they are defined. Note that the user can
+    # define internal regions but leave outer regions undefined. We will do this
+    # by merging the outer region data with the data frame. We will tag those
+    # regions as through movements.
+    if (!is.null(outer_regions)) {
+      # The outer region flows are usually coded as one way, but of course the
+      # flows move in opposite direction as well. Thus, we'll first need to add
+      # the other direction to the flows.
+      opposite_direction <- outer_regions %>%
+        dplyr::mutate(temp = dms_orig, dms_orig = dms_dest, dms_dest = temp) %>%
+        dplyr::mutate(temp = entry, entry = exit, exit = temp, temp = NULL)
+      outer_regions <- dplyr::bind_rows(outer_regions, opposite_direction)
+
+      # Now we can merge the flow data with these outer region definitions,
+      # which will allow us to carry forward any data included in the latter
+      recast <- dplyr::left_join(recast, outer_regions, by = c("dms_orig",
+          "dms_dest"))
+
+      # And finally, tag the outer regions as through flows. We will process the
+      # list of all through flows as we cannot tag based upon unique or non-
+      # missing contents outer_regions because we don't know for sure what
+      # fields, if any, will be included other than domestic O and D.
+      n_outer_regions <- nrow(outer_regions)
+      for (i in (1:n_outer_regions)) {
+        recast$direction <- ifelse(recast$dms_orig == outer_regions$dms_orig[i] &
+            recast$dms_dest == outer_regions$dms_dest[i], "through",
           recast$direction)
       }
     }
@@ -168,7 +183,7 @@ preprocess_faf4_database <- function(fhwa_db, target_year, interpolate = FALSE,
   # less error-prone to recast as descriptive string. In this case we only need
   # to differentiate between domestic and cross-border flows.
   redo_trade_type <- dplyr::mutate(recast, trade_type = ifelse(trade_type == 1,
-    "domestic", ifelse(trade_type %in% c(2, 3), "border", NA)))
+    "domestic", ifelse(trade_type %in% c(2, 3), "x-border", NA)))
 
   # We should also recode the mode of transport while we're at it
   redo_transport_mode <- dplyr::mutate(redo_trade_type,
@@ -184,20 +199,16 @@ preprocess_faf4_database <- function(fhwa_db, target_year, interpolate = FALSE,
   print(paste(nrow(keep), "records retained:"), quote = FALSE)
   print(table(keep$direction, useNA = "ifany"))
 
-  # How many records have zero transactions? There is a frustrating and crazy
-  # inconsistency bug in dplyr::filter() that calls an apparently deprecated
-  # version of filter_(), so get around that with base R functionality
+  # How many records have zero transactions?
   n_zeros <- nrow(dplyr::filter(keep, exp_value <= 0.0, exp_tons <= 0.0))
   pct_zeros <- swimctr::percent(n_zeros, nrow(keep))
   print(paste0(n_zeros, " of ", nrow(keep), " records (", pct_zeros,
     "%) have zero tons and value coded"), quote = FALSE)
 
-  # Finally, create a database with only the fields we need and the format we
-  # can use them
-  redux <- dplyr::select(keep, year, fr_orig, dms_orig, fr_dest, dms_dest,
-    fr_inmode, dms_mode, fr_outmode, sctg2, trade_type, wgt_dist, exp_tons,
-    exp_value, exp_tmiles, domestic_mode)
+  # Show us the total flows by mode and direction
+  print("Annual tonnage by direction and mode for modeled area:", quote = FALSE)
+  print(addmargins(xtabs(exp_tons ~ domestic_mode + direction, data = keep)))
 
   # Return the results
-  return(redux)
+  return(keep)
 }
