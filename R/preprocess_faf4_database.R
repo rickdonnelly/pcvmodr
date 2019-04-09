@@ -201,7 +201,7 @@ preprocess_faf4_database <- function(fhwa_db, target_year, interpolate = FALSE,
 
   # How many records have zero transactions?
   n_zeros <- nrow(dplyr::filter(keep, exp_value <= 0.0, exp_tons <= 0.0))
-  pct_zeros <- swimctr::percent(n_zeros, nrow(keep))
+  pct_zeros <- pcvmodr::percent(n_zeros, nrow(keep))
   print(paste0(n_zeros, " of ", nrow(keep), " records (", pct_zeros,
     "%) have zero tons and value coded"), quote = FALSE)
 
