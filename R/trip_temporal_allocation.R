@@ -46,11 +46,11 @@ trip_temporal_allocation <- function(daily_trips, temporal_distributions) {
 
   # We next need to code the period associated with each starting hour
   add_period <- daily_trips %>%
-    dplyr::mutate(period = ifelse(start_hour >= 7 & start_hour < 9, "AM",
-      ifelse(start_hour >= 9 & start_hour < 16, "MD",
-        ifelse(start_hour >= 16 & start_hour < 18, "PM", "NT")))) %>%
-    dplyr::mutate(matrix = ifelse(vehicle_type %in% c("SU", "TT"), "SUT",
-      "MUT")) %>%
+    dplyr::mutate(period = case_when(start_hour >= 7 & start_hour < 9 ~ "AM",
+      start_hour >= 9 & start_hour < 16 ~ "MD",
+      start_hour >= 16 & start_hour < 18 ~ "PM", TRUE ~ "NT")) %>%
+    dplyr::mutate(matrix = case_when(vehicle_type %in% c("SU", "TT") ~ "SUT",
+      TRUE ~ "MUT")) %>%
     dplyr::mutate(matrix = paste0(tolower(period), '_', tolower(matrix)))
 
   # Send the results back to the calling program

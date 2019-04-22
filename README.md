@@ -6,10 +6,12 @@ The `pcvmodr` system actually encompasses three separate but complementary model
 + A long-distance truck model that connects the internal model area with markets in the rest of the continent
 + An urban truck tour model that handles "the last mile" of long-distance flows, typically through nearby distribution centers, as well as local truck travel within the internal model area
 
-The technical details of each of these models need not concern us at this point. What is of note is that this functionality should probably be broken out into three different packages at some point. For the time being they are bundled in this package, which can be installed easily:
+The technical details of each of these models need not concern us at this point. What is of note is that this functionality should probably be broken out into three different packages at some point. For the time being they are bundled in this package, which can be installed easily. We make good use of Greg Macfarlane's excellent [omxr package](https://github.com/gregmacfarlane/omxr) to read OMX files and convert them into tibbles. This, in turn, requires installation of the `rhdf5` package, which Greg explains the process for in his [README file](https://github.com/gregmacfarlane/omxr/blob/master/README.md).
 
 ```r
 install.packages("devtools")   # If not already installed
+# Install rhdf5 if not already installed, then run next two commands:
+devtools::install_github("gregmacfarlane/omxr")
 devtools::install_github("rickdonnelly/pcvmodr")
 ```
 
