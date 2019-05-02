@@ -4,12 +4,16 @@
 \alias{create_faf4_annual_truckloads}
 \title{Create annual truckload equivalents from FAF v4+ regional flow database}
 \usage{
-create_faf4_annual_truckloads(faf_flows)
+create_faf4_annual_truckloads(faf_flows, load_consolidation_factor = 1)
 }
 \arguments{
 \item{faf_flows}{Data frame containing the FAF interregional flows for the
 analysis year, usually derived by applying preprecessor function(s) on
 FHWA database for the desired target year.}
+
+\item{load_consolidation_factor}{Numeric value representing the potential for
+two or more commodity flows to be consolidated into single truck for
+delivery (default = 1.0)}
 }
 \description{
 Create annual truckload equivalents from FAF v4+ regional flow database
